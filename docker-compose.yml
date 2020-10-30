@@ -1,0 +1,200 @@
+version: "2"
+
+services:
+  gateway:
+    container_name: zeebe-cluster-gateway
+    image: camunda/zeebe:0.25.0
+    restart: always
+    depends_on:
+      - node0
+    environment:
+      - ZEEBE_LOG_LEVEL=debug
+      - ZEEBE_STANDALONE_GATEWAY=true
+      - ZEEBE_GATEWAY_NETWORK_HOST=0.0.0.0
+      - ZEEBE_GATEWAY_NETWORK_PORT=26500
+      - ZEEBE_GATEWAY_CLUSTER_CONTACTPOINT=node0:26502
+      - ZEEBE_GATEWAY_CLUSTER_PORT=26502
+      - ZEEBE_GATEWAY_CLUSTER_HOST=gateway
+      - ZEEBE_GATEWAY_SECURITY_ENABLED=false
+      - ZEEBE_GATEWAY_LONGPOLLING_ENABLED=true
+      - ZEEBE_BROKER_GATEWAY_SECURITY_ENABLED=false
+      - ZEEBE_GATEWAY_THREADS_MANAGEMENTTHREADS=4
+      - JAVA_OPTS=-Xmx4g -XX:MaxRAMPercentage=25.0 -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/usr/local/zeebe/data -XX:ErrorFile=/usr/local/zeebe/data/zeebe_error%p.log -XX:+ExitOnOutOfMemoryError
+    ports:
+      - "2720:26500"
+    networks:
+      - zeebe_network
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+
+  gateway2:
+    container_name: zeebe-cluster-gateway2
+    image: camunda/zeebe:0.25.0
+    restart: always
+    depends_on:
+      - node0
+    environment:
+      - ZEEBE_LOG_LEVEL=debug
+      - ZEEBE_STANDALONE_GATEWAY=true
+      - ZEEBE_GATEWAY_NETWORK_HOST=0.0.0.0
+      - ZEEBE_GATEWAY_NETWORK_PORT=26500
+      - ZEEBE_GATEWAY_CLUSTER_CONTACTPOINT=node0:26502
+      - ZEEBE_GATEWAY_CLUSTER_PORT=26502
+      - ZEEBE_GATEWAY_CLUSTER_HOST=gateway2
+      - ZEEBE_GATEWAY_SECURITY_ENABLED=false
+      - ZEEBE_GATEWAY_LONGPOLLING_ENABLED=true
+      - ZEEBE_BROKER_GATEWAY_SECURITY_ENABLED=false
+      - ZEEBE_GATEWAY_THREADS_MANAGEMENTTHREADS=4
+      - JAVA_OPTS=-Xmx4g -XX:MaxRAMPercentage=25.0 -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/usr/local/zeebe/data -XX:ErrorFile=/usr/local/zeebe/data/zeebe_error%p.log -XX:+ExitOnOutOfMemoryError
+    ports:
+      - "2721:26500"
+    networks:
+      - zeebe_network
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+
+  node0:
+    container_name: zeebe-cluster-broker0
+    image: camunda/zeebe:0.25.0
+    restart: always
+    environment:
+      - ZEEBE_LOG_LEVEL=debug
+      - ZEEBE_BROKER_CLUSTER_NODEID=0
+      - ZEEBE_BROKER_GATEWAY_CLUSTER_HOST=gateway
+      - ZEEBE_BROKER_DATA_USEMMAP=true
+      - JAVA_OPTS=-Xmx4g -XX:MaxRAMPercentage=25.0 -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/usr/local/zeebe/data -XX:ErrorFile=/usr/local/zeebe/data/zeebe_error%p.log -XX:+ExitOnOutOfMemoryError
+    networks:
+      zeebe_network:
+    volumes:
+      - ./db/node0:/usr/local/zeebe/data
+      - ./cfg/application.yaml:/usr/local/zeebe/config/application.yaml:ro
+      - /etc/localtime:/etc/localtime:ro
+
+  node1:
+    container_name: zeebe-cluster-broker1
+    image: camunda/zeebe:0.25.0
+    restart: always
+    environment:
+      - ZEEBE_LOG_LEVEL=debug
+      - ZEEBE_BROKER_CLUSTER_NODEID=1
+      - ZEEBE_BROKER_GATEWAY_CLUSTER_HOST=gateway
+      - ZEEBE_BROKER_DATA_USEMMAP=true
+      - JAVA_OPTS=-Xmx4g -XX:MaxRAMPercentage=25.0 -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/usr/local/zeebe/data -XX:ErrorFile=/usr/local/zeebe/data/zeebe_error%p.log -XX:+ExitOnOutOfMemoryError
+    networks:
+      - zeebe_network
+    depends_on:
+      - node0
+    volumes:
+      - ./db/node1:/usr/local/zeebe/data
+      - ./cfg/application.yaml:/usr/local/zeebe/config/application.yaml:ro
+      - /etc/localtime:/etc/localtime:ro
+
+  node2:
+    container_name: zeebe-cluster-broker2
+    image: camunda/zeebe:0.25.0
+    restart: always
+    environment:
+      - ZEEBE_LOG_LEVEL=debug
+      - ZEEBE_BROKER_CLUSTER_NODEID=2
+      - ZEEBE_BROKER_GATEWAY_CLUSTER_HOST=gateway
+      - ZEEBE_BROKER_DATA_USEMMAP=true
+      - JAVA_OPTS=-Xmx4g -XX:MaxRAMPercentage=25.0 -XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/usr/local/zeebe/data -XX:ErrorFile=/usr/local/zeebe/data/zeebe_error%p.log -XX:+ExitOnOutOfMemoryError
+    networks:
+      - zeebe_network
+    depends_on:
+      - node1
+    volumes:
+      - ./db/node2:/usr/local/zeebe/data
+      - ./cfg/application.yaml:/usr/local/zeebe/config/application.yaml:ro
+      - /etc/localtime:/etc/localtime:ro
+
+  worker1:
+    image: maximmonin/zeebe-cluster-worker
+    container_name: zeebe-cluster-worker1
+    restart: always
+    depends_on:
+      - node0
+    networks:
+      - zeebe_network
+    environment:
+      - LogLevel=INFO
+      - ZeebeUrl=gateway:26500
+      - ResponseTimeout=60000
+      - TaskType=service-task
+    volumes:
+      - ./workers/node/server.js:/app/server.js:ro
+      - ./workers/js:/app/js
+      - /etc/localtime:/etc/localtime:ro
+
+  worker2:
+    image: maximmonin/zeebe-cluster-worker
+    container_name: zeebe-cluster-worker2
+    restart: always
+    depends_on:
+      - node0
+    networks:
+      - zeebe_network
+    environment:
+      - LogLevel=INFO
+      - ZeebeUrl=gateway2:26500
+      - ResponseTimeout=60000
+      - TaskType=service-task
+    volumes:
+      - ./workers/node/server.js:/app/server.js:ro
+      - ./workers/js:/app/js
+      - /etc/localtime:/etc/localtime:ro
+
+  operate:
+    container_name: zeebe-cluster-operate
+    image: camunda/operate:0.25.0-rc1
+    restart: always
+    ports:
+      - "2722:8080"
+    depends_on:
+      - node0
+      - elasticsearch
+    volumes:
+      - ./cfg/operate-application.yml:/usr/local/operate/config/application.yml:ro
+      - /etc/localtime:/etc/localtime:ro
+    networks:
+      - zeebe_network
+
+  elasticsearch:
+    image: elasticsearch:6.8.12
+    restart: always
+    container_name: zeebe-cluster-search
+    environment:
+      - discovery.type=single-node
+      - cluster.routing.allocation.disk.threshold_enabled=false
+      - bootstrap.memory_lock=true
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - ./cfg/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml:ro
+      - ./elastic:/usr/share/elasticsearch/data
+      - /etc/localtime:/etc/localtime:ro
+    expose:
+      - 9200
+    networks:
+      - zeebe_network
+
+  kibana:
+    image: kibana:6.8.12
+    restart: always
+    container_name: zeebe-cluster-kibana
+    networks:
+      - zeebe_network
+    volumes:
+      - ./cfg/kibana.yml:/usr/share/kibana/config/kibana.yml:ro
+      - /etc/localtime:/etc/localtime:ro
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+    ports:
+     - "2723:5601"
+
+networks:
+  zeebe_network:
+    driver: bridge

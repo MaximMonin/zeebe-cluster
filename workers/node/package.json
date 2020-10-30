@@ -1,0 +1,11 @@
+{
+  "name": "zeebe-cluster-worker",
+  "version": "0.1.0",
+  "description": "Cluster Node.js worker for Zeebe",
+  "private": true,
+  "dependencies": {
+    "zeebe-node": "~0.25.0",
+    "axios": "~0.20.0",
+    "faker": "~5.1.0"
+  }
+}
