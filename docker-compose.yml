@@ -120,6 +120,7 @@ services:
       - LogLevel=INFO
       - ZeebeUrl=gateway:26500
       - ResponseTimeout=60000
+      - JobsToActivate=25
       - TaskType=service-task
     volumes:
       - ./workers/node/server.js:/app/server.js:ro
@@ -138,6 +139,7 @@ services:
       - LogLevel=INFO
       - ZeebeUrl=gateway2:26500
       - ResponseTimeout=60000
+      - JobsToActivate=25
       - TaskType=service-task
     volumes:
       - ./workers/node/server.js:/app/server.js:ro

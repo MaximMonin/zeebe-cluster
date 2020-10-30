@@ -5,6 +5,7 @@ const url = process.env.ZeebeUrl || 'gateway:26500';
 const timeout = process.env.ResponseTimeout || 60000;
 const loglevel = process.env.LogLevel || 'INFO';
 const tasktype = process.env.TaskType || 'service-task';
+const jobsToActivate = process.env.JobsToActivate || 32;
 
 console.log('Zeebe Node worker is starting...')
 
@@ -58,7 +59,7 @@ async function main() {
       await router (task, complete);
     },
     failWorkflowOnException: false,
-    maxJobsToActivate: 200,
+    maxJobsToActivate: jobsToActivate,
     longPoll: Duration.minutes.of(2),
     timeout: timeout,
     loglevel: loglevel,
