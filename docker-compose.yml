@@ -116,8 +116,6 @@ services:
       - node0
     networks:
       - zeebe_network
-    extra_hosts:
-      - "zeebe:$ZEEBE"
     environment:
       - LogLevel=INFO
       - ZeebeUrl=gateway:26500
@@ -137,8 +135,6 @@ services:
       - node0
     networks:
       - zeebe_network
-    extra_hosts:
-      - "zeebe:$ZEEBE"
     environment:
       - LogLevel=INFO
       - ZeebeUrl=gateway2:26500
